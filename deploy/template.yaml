@@ -327,10 +327,6 @@ Conditions:
     - !Not [ !Equals [ !Ref TrafficTestRoleArn, none ]]
 
   UseCanaryDeploymentAlarms: !Not [ !Equals [ !Ref LambdaDeploymentPreference, AllAtOnce ]]
-  IsDevOrBuildOrStaging: !Or
-    - !Equals [ !Ref Environment, dev ]
-    - !Equals [ !Ref Environment, build ]
-    - !Equals [ !Ref Environment, staging ]
 
 Globals:
   Function:
@@ -696,8 +692,8 @@ Resources:
         Service: backend
         Name: F2FRestApi
         Source: alphagov/di-devplatform-demo-sam-app/sam-app/template.yaml
-        FMSRegionalPolicy: !If [ IsDevOrBuildOrStaging, "false", "none" ]
-        CustomPolicy: !If [ IsDevOrBuildOrStaging, "true", "none" ]
+        FMSRegionalPolicy: false
+        CustomPolicy: true
 
   F2FAPIGatewayAccessLogGroup:
     Type: AWS::Logs::LogGroup
@@ -1992,6 +1988,8 @@ Resources:
           GOV_NOTIFY_QUEUE_URL: !Ref GovNotifySQSQueue
           TXMA_QUEUE_URL: !Ref TxMASQSQueue
           YOTI_KEY_SSM_PATH: !Sub "/${Environment}/YOTI/PRIVATEKEY"
+          FETCH_YOTI_SESSION_BACKOFF_PERIOD_MS: 5000
+          FETCH_YOTI_SESSION_MAX_RETRIES: 3
           YOTISDK: !FindInMap [EnvironmentVariables, !Ref Environment, YOTISDK]
           YOTI_SESSION_TTL_DAYS:
             !FindInMap [EnvironmentVariables, !Ref Environment, YOTISESSIONTTLDAYS] 
@@ -3603,6 +3601,8 @@ Resources:
           GOVUKNOTIFY_DYNAMIC_REMINDER_TEMPLATE_ID:
               !FindInMap [ EnvironmentVariables, !Ref Environment, GOVUKNOTIFYDYNAMICREMINDERTEMPLATEID ]
           YOTI_KEY_SSM_PATH: !Sub "/${Environment}/YOTI/PRIVATEKEY"
+          FETCH_YOTI_SESSION_BACKOFF_PERIOD_MS: 5000
+          FETCH_YOTI_SESSION_MAX_RETRIES: 3
           GOVUKNOTIFY_API_KEY_SSM_PATH: !Sub "/${Environment}/f2f-gov-notify/GOVUKNOTIFY_API_KEY_ENCRYPTED"
           YOTISDK: !FindInMap [ EnvironmentVariables, !Ref Environment, YOTISDK ]
           YOTI_SESSION_TTL_DAYS:             
@@ -5108,6 +5108,8 @@ Resources:
           YOTI_LETTER_BUCKET: !Sub ${AWS::StackName}-yotiletter-f2f-${Environment}
           YOTI_PDF_BUCKET_LETTER_FOLDER: pdf
           YOTI_KEY_SSM_PATH: !Sub "/${Environment}/YOTI/PRIVATEKEY"
+          FETCH_YOTI_SESSION_BACKOFF_PERIOD_MS: 5000
+          FETCH_YOTI_SESSION_MAX_RETRIES: 3
           YOTISDK: !FindInMap [EnvironmentVariables, !Ref Environment, YOTISDK]
       Policies:
         - AWSLambdaBasicExecutionRole
@@ -8627,3 +8629,4 @@ Outputs:
     Value: !GetAtt YotiLetterBucket.Arn
     Export:
       Name: !Sub ${AWS::StackName}-YotiLetterBucketArn
+      
